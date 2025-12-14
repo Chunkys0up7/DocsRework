@@ -1,0 +1,141 @@
+name: Validate Molecules
+
+on:
+  pull_request:
+    paths:
+      - 'molecules/**/*.molecule.yml'
+      - 'schemas/molecule-schema.json'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'molecules/**/*.molecule.yml'
+
+jobs:
+  validate-molecules:
+    name: Validate Molecule Definitions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install jsonschema pyyaml pytest pytest-cov networkx
+
+      - name: Validate YAML syntax
+        run: |
+          python scripts/validate_yaml_syntax.py molecules/
+
+      - name: Validate against JSON schema
+        run: |
+          python scripts/validate_against_schema.py \
+            --schema schemas/molecule-schema.json \
+            --files "molecules/**/*.molecule.yml"
+
+      - name: Validate semantic rules
+        run: |
+          python scripts/validate_semantic_rules.py \
+            --type molecule \
+            --files "molecules/**/*.molecule.yml"
+
+      - name: Check ID format and versioning
+        run: |
+          python scripts/validate_versioning.py \
+            --type molecule \
+            --files "molecules/**/*.molecule.yml"
+
+      - name: Validate atom references exist
+        run: |
+          python scripts/validate_references.py \
+            --source-type molecule \
+            --source-dir molecules/ \
+            --ref-type atom \
+            --ref-dir atoms/
+
+      - name: Validate flow logic
+        run: |
+          python scripts/validate_flow.py \
+            --type molecule \
+            --files "molecules/**/*.molecule.yml"
+
+      - name: Detect circular dependencies
+        run: |
+          python scripts/detect_circular_deps.py \
+            --type molecule \
+            --files "molecules/**/*.molecule.yml"
+
+      - name: Validate step references
+        run: |
+          python scripts/validate_step_references.py \
+            --files "molecules/**/*.molecule.yml"
+
+      - name: Validate gates and transitions
+        run: |
+          python scripts/validate_gates.py \
+            --files "molecules/**/*.molecule.yml"
+
+      - name: Run molecule integration tests
+        run: |
+          pytest tests/molecules/ -v --cov=molecules --cov-report=xml --cov-report=term
+
+      - name: Validate all flow paths covered by tests
+        run: |
+          python scripts/validate_test_coverage.py \
+            --type molecule \
+            --source-dir molecules/ \
+            --test-dir tests/molecules/
+
+      - name: Validate ownership
+        run: |
+          python scripts/validate_ownership.py \
+            --files "molecules/**/*.molecule.yml"
+
+      - name: Check for breaking changes
+        if: github.event_name == 'pull_request'
+        run: |
+          python scripts/detect_breaking_changes.py \
+            --type molecule \
+            --base-ref origin/${{ github.base_ref }} \
+            --head-ref HEAD
+
+      - name: Generate validation report
+        if: always()
+        run: |
+          python scripts/generate_validation_report.py \
+            --type molecule \
+            --output molecule-validation-report.md
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('molecule-validation-report.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+
+      - name: Upload validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: molecule-validation-results
+          path: |
+            molecule-validation-report.md
+            coverage.xml
+          retention-days: 30

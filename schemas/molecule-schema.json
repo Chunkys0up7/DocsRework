@@ -1,0 +1,239 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://banking-docs-code.org/schemas/molecule-schema.json",
+  "title": "Molecule Schema",
+  "description": "Schema for multi-step procedures in the Banking Docs-as-Code system",
+  "type": "object",
+  "required": ["id", "version", "name", "description", "owner", "steward", "atoms", "flow", "risks", "controls"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^molecule:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$",
+      "description": "Unique identifier following pattern: molecule:name:vX.Y.Z"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version (MAJOR.MINOR.PATCH)"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 100,
+      "description": "Human-readable name of the molecule"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 1000,
+      "description": "Detailed description of what this molecule does"
+    },
+    "owner": {
+      "type": "string",
+      "format": "email",
+      "description": "Email of the owner responsible for this molecule"
+    },
+    "steward": {
+      "type": "string",
+      "format": "email",
+      "description": "Email of the steward maintaining this molecule"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags for categorization and discovery"
+    },
+    "atoms": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["stepId", "atomRef"],
+        "properties": {
+          "stepId": {
+            "type": "string",
+            "pattern": "^step-[a-z0-9-]+$"
+          },
+          "atomRef": {
+            "type": "string",
+            "pattern": "^atom:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+          },
+          "description": {
+            "type": "string"
+          },
+          "inputMapping": {
+            "type": "object",
+            "description": "Maps molecule inputs to atom inputs"
+          },
+          "outputMapping": {
+            "type": "object",
+            "description": "Maps atom outputs to molecule context"
+          }
+        }
+      },
+      "description": "Ordered list of atoms that compose this molecule"
+    },
+    "flow": {
+      "type": "object",
+      "required": ["startStep"],
+      "properties": {
+        "startStep": {
+          "type": "string",
+          "pattern": "^step-[a-z0-9-]+$"
+        },
+        "transitions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["from", "to"],
+            "properties": {
+              "from": {
+                "type": "string",
+                "pattern": "^step-[a-z0-9-]+$"
+              },
+              "to": {
+                "type": "string",
+                "pattern": "^step-[a-z0-9-]+$|^END$"
+              },
+              "condition": {
+                "type": "string",
+                "description": "Boolean expression for conditional flow"
+              },
+              "label": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "gates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["stepId", "type"],
+            "properties": {
+              "stepId": {
+                "type": "string",
+                "pattern": "^step-[a-z0-9-]+$"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["approval", "validation", "control", "risk-check"]
+              },
+              "approver": {
+                "type": "string",
+                "format": "email"
+              },
+              "validationRules": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "description": "Flow control and transition logic"
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type", "required"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["string", "number", "boolean", "object", "array", "file", "document"]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["string", "number", "boolean", "object", "array", "file", "document"]
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^risk:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+      },
+      "description": "References to associated risks"
+    },
+    "controls": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^control:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+      },
+      "description": "References to implemented controls"
+    },
+    "regulations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^regulation:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+      }
+    },
+    "sla": {
+      "type": "object",
+      "properties": {
+        "maxDuration": {
+          "type": "integer",
+          "description": "Maximum duration in seconds"
+        },
+        "availability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "deprecated": {
+          "type": "boolean"
+        },
+        "supersededBy": {
+          "type": "string",
+          "pattern": "^molecule:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+        }
+      }
+    }
+  }
+}

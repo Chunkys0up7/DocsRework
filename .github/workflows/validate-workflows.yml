@@ -1,0 +1,150 @@
+name: Validate Workflows
+
+on:
+  pull_request:
+    paths:
+      - 'workflows/**/*.workflow.yml'
+      - 'schemas/workflow-schema.json'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'workflows/**/*.workflow.yml'
+
+jobs:
+  validate-workflows:
+    name: Validate Workflow Definitions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install jsonschema pyyaml pytest pytest-cov networkx
+
+      - name: Validate YAML syntax
+        run: |
+          python scripts/validate_yaml_syntax.py workflows/
+
+      - name: Validate against JSON schema
+        run: |
+          python scripts/validate_against_schema.py \
+            --schema schemas/workflow-schema.json \
+            --files "workflows/**/*.workflow.yml"
+
+      - name: Validate semantic rules
+        run: |
+          python scripts/validate_semantic_rules.py \
+            --type workflow \
+            --files "workflows/**/*.workflow.yml"
+
+      - name: Check ID format and versioning
+        run: |
+          python scripts/validate_versioning.py \
+            --type workflow \
+            --files "workflows/**/*.workflow.yml"
+
+      - name: Validate component references exist
+        run: |
+          python scripts/validate_references.py \
+            --source-type workflow \
+            --source-dir workflows/ \
+            --ref-type atom \
+            --ref-dir atoms/
+
+          python scripts/validate_references.py \
+            --source-type workflow \
+            --source-dir workflows/ \
+            --ref-type molecule \
+            --ref-dir molecules/
+
+      - name: Validate flow logic and transitions
+        run: |
+          python scripts/validate_flow.py \
+            --type workflow \
+            --files "workflows/**/*.workflow.yml"
+
+      - name: Detect circular dependencies
+        run: |
+          python scripts/detect_circular_deps.py \
+            --type workflow \
+            --files "workflows/**/*.workflow.yml"
+
+      - name: Validate parallel branches
+        run: |
+          python scripts/validate_parallel_branches.py \
+            --files "workflows/**/*.workflow.yml"
+
+      - name: Validate error handling configuration
+        run: |
+          python scripts/validate_error_handling.py \
+            --files "workflows/**/*.workflow.yml"
+
+      - name: Validate SLA configurations
+        run: |
+          python scripts/validate_sla.py \
+            --files "workflows/**/*.workflow.yml"
+
+      - name: Run workflow end-to-end tests
+        run: |
+          pytest tests/workflows/ -v --cov=workflows --cov-report=xml --cov-report=term
+
+      - name: Validate monitoring and KPI configuration
+        run: |
+          python scripts/validate_monitoring.py \
+            --files "workflows/**/*.workflow.yml"
+
+      - name: Validate ownership and business context
+        run: |
+          python scripts/validate_ownership.py \
+            --files "workflows/**/*.workflow.yml"
+
+      - name: Check for breaking changes
+        if: github.event_name == 'pull_request'
+        run: |
+          python scripts/detect_breaking_changes.py \
+            --type workflow \
+            --base-ref origin/${{ github.base_ref }} \
+            --head-ref HEAD
+
+      - name: Generate validation report
+        if: always()
+        run: |
+          python scripts/generate_validation_report.py \
+            --type workflow \
+            --output workflow-validation-report.md
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('workflow-validation-report.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+
+      - name: Upload validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: workflow-validation-results
+          path: |
+            workflow-validation-report.md
+            coverage.xml
+          retention-days: 30

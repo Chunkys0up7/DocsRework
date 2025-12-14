@@ -1,0 +1,280 @@
+name: Deploy to Knowledge Graph
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: 'staging'
+
+jobs:
+  approve-deployment:
+    name: Request Deployment Approval
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment || 'staging' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate deployment summary
+        run: |
+          echo "## Deployment Summary" > deployment-summary.md
+          echo "Environment: ${{ github.event.inputs.environment || 'staging' }}" >> deployment-summary.md
+          echo "Branch: ${{ github.ref_name }}" >> deployment-summary.md
+          echo "Commit: ${{ github.sha }}" >> deployment-summary.md
+          git log -1 --pretty=format:"Commit Message: %s%nAuthor: %an <%ae>%nDate: %ad" >> deployment-summary.md
+
+      - name: Display deployment info
+        run: cat deployment-summary.md
+
+  deploy:
+    name: Deploy Artifacts to Knowledge Graph
+    runs-on: ubuntu-latest
+    needs: approve-deployment
+    environment:
+      name: ${{ github.event.inputs.environment || 'staging' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install neo4j pyyaml python-dotenv
+
+      - name: Configure Neo4j connection
+        env:
+          NEO4J_URI: ${{ secrets.NEO4J_URI }}
+          NEO4J_USER: ${{ secrets.NEO4J_USER }}
+          NEO4J_PASSWORD: ${{ secrets.NEO4J_PASSWORD }}
+        run: |
+          echo "NEO4J_URI=$NEO4J_URI" >> $GITHUB_ENV
+          echo "NEO4J_USER=$NEO4J_USER" >> $GITHUB_ENV
+          echo "NEO4J_PASSWORD=$NEO4J_PASSWORD" >> $GITHUB_ENV
+
+      - name: Test Neo4j connection
+        run: |
+          python scripts/test_neo4j_connection.py
+
+      - name: Create backup of current KG state
+        run: |
+          python scripts/backup_kg.py \
+            --output-dir backups/ \
+            --timestamp $(date +%Y%m%d_%H%M%S)
+
+      - name: Detect changed artifacts
+        id: detect-changes
+        run: |
+          python scripts/detect_changed_artifacts.py \
+            --base-ref ${{ github.event.before || 'HEAD~1' }} \
+            --head-ref HEAD \
+            --output changes.json
+
+      - name: Validate deployment order
+        run: |
+          python scripts/validate_deployment_order.py \
+            --changes changes.json \
+            --output deployment-plan.json
+
+      - name: Deploy regulations
+        run: |
+          python scripts/deploy_to_kg.py \
+            --type regulation \
+            --files "regulations/**/*.regulation.yml" \
+            --dry-run false
+
+      - name: Deploy risks
+        run: |
+          python scripts/deploy_to_kg.py \
+            --type risk \
+            --files "risks/**/*.risk.yml" \
+            --dry-run false
+
+      - name: Deploy controls
+        run: |
+          python scripts/deploy_to_kg.py \
+            --type control \
+            --files "controls/**/*.control.yml" \
+            --dry-run false
+
+      - name: Deploy atoms
+        run: |
+          python scripts/deploy_to_kg.py \
+            --type atom \
+            --files "atoms/**/*.atom.yml" \
+            --dry-run false
+
+      - name: Deploy molecules
+        run: |
+          python scripts/deploy_to_kg.py \
+            --type molecule \
+            --files "molecules/**/*.molecule.yml" \
+            --dry-run false
+
+      - name: Deploy workflows
+        run: |
+          python scripts/deploy_to_kg.py \
+            --type workflow \
+            --files "workflows/**/*.workflow.yml" \
+            --dry-run false
+
+      - name: Create relationships
+        run: |
+          python scripts/create_kg_relationships.py \
+            --atom-dir atoms/ \
+            --molecule-dir molecules/ \
+            --workflow-dir workflows/ \
+            --risk-dir risks/ \
+            --control-dir controls/ \
+            --regulation-dir regulations/
+
+      - name: Validate KG consistency
+        run: |
+          python scripts/validate_kg_consistency.py \
+            --output kg-validation-report.json
+
+      - name: Run KG integrity checks
+        run: |
+          python scripts/run_kg_integrity_checks.py \
+            --checks all \
+            --output kg-integrity-report.json
+
+      - name: Update KG indexes
+        run: |
+          python scripts/update_kg_indexes.py
+
+      - name: Tag deployment in KG
+        run: |
+          python scripts/tag_deployment.py \
+            --version ${{ github.sha }} \
+            --environment ${{ github.event.inputs.environment || 'staging' }} \
+            --timestamp $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+      - name: Generate deployment report
+        if: always()
+        run: |
+          python scripts/generate_deployment_report.py \
+            --changes changes.json \
+            --plan deployment-plan.json \
+            --validation kg-validation-report.json \
+            --integrity kg-integrity-report.json \
+            --output deployment-report.md
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          python scripts/rollback_kg.py \
+            --backup-dir backups/ \
+            --latest true
+
+      - name: Notify deployment status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('deployment-report.md', 'utf8');
+            const status = '${{ job.status }}';
+            const emoji = status === 'success' ? '✅' : '❌';
+
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: `${emoji} Deployment to Knowledge Graph: **${status}**\n\n${report}`
+            });
+
+      - name: Upload deployment artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-results
+          path: |
+            deployment-report.md
+            changes.json
+            deployment-plan.json
+            kg-validation-report.json
+            kg-integrity-report.json
+          retention-days: 180
+
+  post-deployment-tests:
+    name: Run Post-Deployment Tests
+    runs-on: ubuntu-latest
+    needs: deploy
+    environment:
+      name: ${{ github.event.inputs.environment || 'staging' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install neo4j pytest pyyaml
+
+      - name: Configure Neo4j connection
+        env:
+          NEO4J_URI: ${{ secrets.NEO4J_URI }}
+          NEO4J_USER: ${{ secrets.NEO4J_USER }}
+          NEO4J_PASSWORD: ${{ secrets.NEO4J_PASSWORD }}
+        run: |
+          echo "NEO4J_URI=$NEO4J_URI" >> $GITHUB_ENV
+          echo "NEO4J_USER=$NEO4J_USER" >> $GITHUB_ENV
+          echo "NEO4J_PASSWORD=$NEO4J_PASSWORD" >> $GITHUB_ENV
+
+      - name: Run smoke tests
+        run: |
+          pytest tests/integration/kg_smoke_tests.py -v
+
+      - name: Validate all workflows executable
+        run: |
+          python scripts/test_workflow_execution.py \
+            --workflows "workflows/**/*.workflow.yml" \
+            --output workflow-execution-test.json
+
+      - name: Check query performance
+        run: |
+          python scripts/benchmark_kg_queries.py \
+            --queries tests/performance/kg_queries.yml \
+            --output query-performance.json
+
+      - name: Verify audit trail
+        run: |
+          python scripts/verify_audit_trail.py \
+            --deployment-sha ${{ github.sha }} \
+            --output audit-verification.json
+
+      - name: Upload post-deployment test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-deployment-test-results
+          path: |
+            workflow-execution-test.json
+            query-performance.json
+            audit-verification.json
+          retention-days: 90

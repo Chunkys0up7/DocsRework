@@ -1,0 +1,87 @@
+id: atom:verify-customer-identity:v1.0.0
+version: 1.0.0
+name: Verify Customer Identity
+description: |
+  Performs customer identity verification using government-issued ID and biometric validation.
+  This atom implements KYC (Know Your Customer) requirements and validates customer identity
+  against sanctions lists and watchlists.
+
+owner: kyc-team@bank.example.com
+steward: platform-engineering@bank.example.com
+
+tags:
+  - kyc
+  - identity-verification
+  - customer-onboarding
+  - aml
+
+inputs:
+  - name: customerId
+    type: string
+    required: true
+    description: Unique identifier for the customer
+    validation:
+      pattern: "^CUST-[0-9]{8}$"
+
+  - name: idDocument
+    type: file
+    required: true
+    description: Scanned government-issued ID document (passport, driver's license, national ID)
+
+  - name: biometricData
+    type: object
+    required: true
+    description: Facial recognition or fingerprint data
+
+  - name: customerData
+    type: object
+    required: true
+    description: Customer personal information (name, DOB, address)
+
+outputs:
+  - name: verificationStatus
+    type: string
+    description: Status of verification (VERIFIED, FAILED, MANUAL_REVIEW)
+
+  - name: confidenceScore
+    type: number
+    description: Confidence score of verification (0-100)
+
+  - name: verificationId
+    type: string
+    description: Unique identifier for this verification attempt
+
+  - name: sanctionsCheckResult
+    type: object
+    description: Results from sanctions and watchlist screening
+
+risks:
+  - risk:identity-fraud:v1.0.0
+  - risk:sanctions-violation:v1.0.0
+  - risk:data-breach:v1.0.0
+
+controls:
+  - control:multi-factor-verification:v1.0.0
+  - control:sanctions-screening:v1.0.0
+  - control:data-encryption:v1.0.0
+  - control:audit-logging:v1.0.0
+
+regulations:
+  - regulation:kyc-aml:v1.0.0
+  - regulation:gdpr:v1.0.0
+  - regulation:patriot-act:v1.0.0
+
+implementation:
+  type: api
+  endpoint: https://api.bank.example.com/v1/kyc/verify
+  timeout: 30
+  retries: 2
+
+sla:
+  maxDuration: 45
+  availability: 99.9
+
+metadata:
+  createdAt: "2026-01-15T10:00:00Z"
+  updatedAt: "2026-01-15T10:00:00Z"
+  deprecated: false

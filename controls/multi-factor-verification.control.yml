@@ -1,0 +1,197 @@
+id: control:multi-factor-verification:v1.0.0
+version: 1.0.0
+name: Multi-Factor Verification Control
+description: |
+  Implements multi-layered identity verification combining multiple independent
+  verification methods including document verification, biometric authentication,
+  knowledge-based authentication, and database cross-checks. This control ensures
+  high confidence in customer identity before granting access or opening accounts.
+
+owner: security-team@bank.example.com
+
+controlType: preventive
+automationLevel: fully-automated
+frequency: event-driven
+
+tags:
+  - identity-verification
+  - authentication
+  - kyc
+  - fraud-prevention
+  - biometrics
+
+effectiveness:
+  rating: 85
+  lastAssessed: "2026-01-10T10:00:00Z"
+  assessedBy: security-audit@bank.example.com
+  evidence:
+    - type: test-results
+      location: /audits/2026-Q1/mfv-control-test.pdf
+      description: Quarterly penetration testing results
+
+    - type: metrics
+      location: /dashboards/fraud-prevention
+      description: Real-time fraud detection metrics dashboard
+
+    - type: incident-reports
+      location: /incidents/2025-fraud-analysis.pdf
+      description: Analysis showing 95% reduction in identity fraud since implementation
+
+  testResults:
+    - testDate: "2026-01-08T14:00:00Z"
+      result: passed
+      findings: |
+        Control operating effectively. All verification factors working correctly.
+        Response time within acceptable limits. No false positives detected in sample.
+
+    - testDate: "2025-10-15T14:00:00Z"
+      result: passed
+      findings: Control effective with 98% accuracy in test scenarios
+
+implementation:
+  method: system
+  technology:
+    - Biometric authentication (facial recognition, fingerprint)
+    - OCR and AI document verification
+    - Knowledge-based authentication (KBA)
+    - Database verification (credit bureaus, government databases)
+    - Liveness detection
+    - Sanctions screening APIs
+
+  procedure: |
+    Multi-Factor Verification Process:
+
+    1. Document Verification Layer:
+       - Capture and analyze government-issued ID
+       - Verify document authenticity using AI/ML models
+       - Extract and validate document data
+       - Check for tampering or forgery indicators
+
+    2. Biometric Verification Layer:
+       - Capture live biometric data (facial recognition or fingerprint)
+       - Perform liveness detection to prevent spoofing
+       - Compare biometric against ID photo
+       - Calculate biometric match confidence score
+
+    3. Knowledge-Based Authentication:
+       - Present questions based on customer history
+       - Verify responses against trusted data sources
+       - Calculate KBA confidence score
+
+    4. Database Cross-Checks:
+       - Verify identity against credit bureau records
+       - Check government databases where permitted
+       - Cross-reference address and employment history
+       - Verify phone number and email ownership
+
+    5. Sanctions and Watchlist Screening:
+       - Screen against OFAC, EU, UN sanctions lists
+       - Check PEP (Politically Exposed Persons) databases
+       - Screen against internal fraud databases
+       - Check adverse media sources
+
+    6. Risk Scoring:
+       - Aggregate all verification factors
+       - Calculate overall confidence score
+       - Apply risk-based decision rules
+       - Route to manual review if threshold not met
+
+    Thresholds:
+    - Auto-approve: Overall confidence >= 85%
+    - Manual review: 70% <= confidence < 85%
+    - Auto-reject: confidence < 70%
+
+  responsible: kyc-operations@bank.example.com
+  reviewer: kyc-quality-assurance@bank.example.com
+  automationScript: /src/kyc/multi_factor_verification.py
+
+mitigatedRisks:
+  - riskRef: risk:identity-fraud:v1.0.0
+    mitigationPercentage: 85
+
+  - riskRef: risk:sanctions-violation:v1.0.0
+    mitigationPercentage: 90
+
+  - riskRef: risk:synthetic-identity-fraud:v1.0.0
+    mitigationPercentage: 80
+
+regulations:
+  - regulationRef: regulation:kyc-aml:v1.0.0
+    requirement: Customer Due Diligence (CDD)
+    compliance: compliant
+
+  - regulationRef: regulation:patriot-act:v1.0.0
+    requirement: Customer Identification Program (CIP)
+    compliance: compliant
+
+  - regulationRef: regulation:gdpr:v1.0.0
+    requirement: Lawful processing of biometric data
+    compliance: compliant
+
+  - regulationRef: regulation:bank-secrecy-act:v1.0.0
+    requirement: Identity verification requirements
+    compliance: compliant
+
+appliedToProcesses:
+  - atom:verify-customer-identity:v1.0.0
+  - molecule:customer-onboarding:v1.0.0
+  - workflow:retail-account-opening:v1.0.0
+
+dependencies:
+  - controlRef: control:data-encryption:v1.0.0
+    relationship: requires
+
+  - controlRef: control:audit-logging:v1.0.0
+    relationship: requires
+
+  - controlRef: control:access-control:v1.0.0
+    relationship: requires
+
+kpis:
+  - name: Verification Success Rate
+    metric: successful_verifications / total_attempts
+    target: 92.0
+    actual: 94.5
+    unit: percentage
+
+  - name: False Positive Rate
+    metric: false_positives / total_verifications
+    target: 2.0
+    actual: 1.3
+    unit: percentage
+
+  - name: Average Verification Time
+    metric: avg_verification_duration
+    target: 30.0
+    actual: 24.5
+    unit: seconds
+
+  - name: Manual Review Rate
+    metric: manual_reviews / total_attempts
+    target: 8.0
+    actual: 5.8
+    unit: percentage
+
+  - name: Fraud Detection Rate
+    metric: fraud_cases_detected / total_fraud_attempts
+    target: 95.0
+    actual: 96.2
+    unit: percentage
+
+testing:
+  testPlan: /tests/controls/multi-factor-verification-test-plan.md
+  testFrequency: quarterly
+  lastTested: "2026-01-08T14:00:00Z"
+  nextTest: "2026-04-08T14:00:00Z"
+
+issues:
+  - issueId: MFV-2025-003
+    description: Occasional latency spikes during peak hours with biometric service
+    severity: medium
+    status: in-progress
+    identifiedDate: "2025-12-15T09:00:00Z"
+
+metadata:
+  createdAt: "2026-01-15T13:00:00Z"
+  updatedAt: "2026-01-15T13:00:00Z"
+  status: active

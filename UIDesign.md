@@ -1,0 +1,12 @@
+The UI/UX design must embody professionalism, clarity, and efficiency, optimized for users in banking, risk, and compliance roles.
+
+No Emoji Policy: Absolutely no emojis are permitted anywhere in the user interface.
+Color Palette: Utilize a professional, muted, and low-saturation color palette. Prioritize shades of Zinc, Slate, and Indigo for primary UI elements, backgrounds, and text. Accent colors should be subtle and used sparingly for interactive elements or status indicators, adhering to accessibility contrast ratios. Avoid bright, high-contrast, or neon colors unless strictly required by accessibility compliance standards (e.g., for critical alerts or specific data visualizations).
+Whitespace: Emphasize generous whitespace to reduce cognitive load and improve readability. Components should breathe, and dense information blocks should be clearly delineated.
+Typography Hierarchy: Establish a clear and consistent typographic scale (e.g., Inter, Roboto, Open Sans) to guide user attention and convey information hierarchy. Use distinct font sizes, weights, and line heights for headings, subheadings, body text, labels, and metadata. Sans-serif fonts are preferred for clarity.
+Data Density: While promoting whitespace, ensure high data density where necessary, particularly in tables and dashboards, without sacrificing readability. Use subtle separators, alternating row colors, and clear column headers to manage complex data effectively.
+Purpose-Driven Design: Every UI element must serve a clear function. Avoid unnecessary ornamentation. Focus on intuitive navigation, clear calls to action, and efficient data input/output workflows.
+Accessibility: Adhere strictly to WCAG 2.1 AA standards for all UI components, including color contrast, keyboard navigation, and screen reader compatibility, ensuring an inclusive experience for all users.
+Responsiveness: The interface must be fully responsive, adapting seamlessly to various screen sizes (desktop, tablet, mobile) to support diverse work environments and user preferences.
+Professional Language: Use precise, unambiguous, and professional terminology throughout the UI. Avoid jargon unless it is standard industry terminology for the target audience.
+Feedback Mechanisms: Provide clear, concise, and professional feedback to users for all actions, including success messages, error states, and loading indicators, without using bright or jarring animations.

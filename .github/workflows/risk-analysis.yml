@@ -1,0 +1,248 @@
+name: Risk Analysis
+
+on:
+  pull_request:
+    paths:
+      - 'atoms/**/*.atom.yml'
+      - 'molecules/**/*.molecule.yml'
+      - 'workflows/**/*.workflow.yml'
+      - 'risks/**/*.risk.yml'
+      - 'controls/**/*.control.yml'
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  risk-analysis:
+    name: Analyze Risk Impact
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml networkx pandas numpy
+
+      - name: Calculate inherent risk scores
+        run: |
+          python scripts/calculate_risk_scores.py \
+            --risk-dir risks/ \
+            --output inherent-risk-scores.json
+
+      - name: Calculate residual risk scores
+        run: |
+          python scripts/calculate_residual_risk.py \
+            --risk-dir risks/ \
+            --control-dir controls/ \
+            --output residual-risk-scores.json
+
+      - name: Analyze workflow risk aggregation
+        run: |
+          python scripts/aggregate_workflow_risks.py \
+            --workflow-dir workflows/ \
+            --risk-dir risks/ \
+            --output workflow-risks.json
+
+      - name: Validate control effectiveness
+        run: |
+          python scripts/validate_control_effectiveness.py \
+            --control-dir controls/ \
+            --min-effectiveness 70 \
+            --output control-effectiveness.json
+
+      - name: Check control adequacy
+        run: |
+          python scripts/check_control_adequacy.py \
+            --risk-dir risks/ \
+            --control-dir controls/ \
+            --min-coverage 80 \
+            --output control-adequacy-report.json
+
+      - name: Detect high-risk workflows
+        run: |
+          python scripts/detect_high_risk_workflows.py \
+            --workflow-dir workflows/ \
+            --risk-threshold 15 \
+            --output high-risk-workflows.json
+
+      - name: Validate risk ownership
+        run: |
+          python scripts/validate_risk_ownership.py \
+            --risk-dir risks/ \
+            --output risk-ownership-report.json
+
+      - name: Check for unmitigated risks
+        run: |
+          python scripts/check_unmitigated_risks.py \
+            --risk-dir risks/ \
+            --control-dir controls/ \
+            --output unmitigated-risks.json
+
+      - name: Generate risk heat map
+        run: |
+          python scripts/generate_risk_heatmap.py \
+            --risk-scores inherent-risk-scores.json \
+            --output risk-heatmap.png
+
+      - name: Compare risk changes
+        if: github.event_name == 'pull_request'
+        run: |
+          python scripts/compare_risk_changes.py \
+            --base-ref origin/${{ github.base_ref }} \
+            --head-ref HEAD \
+            --output risk-changes.json
+
+      - name: Detect risk threshold violations
+        run: |
+          python scripts/detect_risk_violations.py \
+            --risk-scores residual-risk-scores.json \
+            --threshold-config .cicd/risk-thresholds.yml \
+            --output risk-violations.json
+
+      - name: Generate risk analysis report
+        if: always()
+        run: |
+          python scripts/generate_risk_report.py \
+            --inherent inherent-risk-scores.json \
+            --residual residual-risk-scores.json \
+            --workflow-risks workflow-risks.json \
+            --control-adequacy control-adequacy-report.json \
+            --violations risk-violations.json \
+            --output risk-analysis-report.md
+
+      - name: Comment PR with risk analysis
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('risk-analysis-report.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## Risk Analysis Results\n\n' + report
+            });
+
+      - name: Fail on critical risk violations
+        run: |
+          python scripts/fail_on_critical_risks.py \
+            --violations risk-violations.json
+
+      - name: Upload risk analysis artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: risk-analysis-results
+          path: |
+            risk-analysis-report.md
+            inherent-risk-scores.json
+            residual-risk-scores.json
+            workflow-risks.json
+            control-adequacy-report.json
+            risk-violations.json
+            risk-heatmap.png
+          retention-days: 90
+
+  compliance-check:
+    name: Check Regulatory Compliance
+    runs-on: ubuntu-latest
+    needs: risk-analysis
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+
+      - name: Validate regulatory mappings
+        run: |
+          python scripts/validate_regulatory_mappings.py \
+            --regulation-dir regulations/ \
+            --control-dir controls/ \
+            --output compliance-mapping.json
+
+      - name: Check regulation coverage
+        run: |
+          python scripts/check_regulation_coverage.py \
+            --regulation-dir regulations/ \
+            --control-dir controls/ \
+            --workflow-dir workflows/ \
+            --min-coverage 95 \
+            --output regulation-coverage.json
+
+      - name: Detect compliance gaps
+        run: |
+          python scripts/detect_compliance_gaps.py \
+            --regulation-dir regulations/ \
+            --control-dir controls/ \
+            --output compliance-gaps.json
+
+      - name: Validate control-to-regulation mapping
+        run: |
+          python scripts/validate_control_regulation_mapping.py \
+            --control-dir controls/ \
+            --regulation-dir regulations/ \
+            --output mapping-validation.json
+
+      - name: Generate compliance report
+        if: always()
+        run: |
+          python scripts/generate_compliance_report.py \
+            --coverage regulation-coverage.json \
+            --gaps compliance-gaps.json \
+            --mapping compliance-mapping.json \
+            --output compliance-report.md
+
+      - name: Comment PR with compliance status
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('compliance-report.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## Compliance Check Results\n\n' + report
+            });
+
+      - name: Fail on compliance violations
+        run: |
+          python scripts/fail_on_compliance_violations.py \
+            --gaps compliance-gaps.json \
+            --threshold critical
+
+      - name: Upload compliance artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compliance-check-results
+          path: |
+            compliance-report.md
+            regulation-coverage.json
+            compliance-gaps.json
+            compliance-mapping.json
+          retention-days: 90

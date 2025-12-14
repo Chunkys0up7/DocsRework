@@ -1,0 +1,314 @@
+id: regulation:kyc-aml:v1.0.0
+version: 1.0.0
+name: Know Your Customer and Anti-Money Laundering Regulations
+shortName: KYC/AML
+description: |
+  Comprehensive regulatory framework requiring financial institutions to verify
+  customer identities, understand the nature of customer relationships, assess
+  money laundering risks, and maintain ongoing monitoring to detect and report
+  suspicious activities. These regulations are designed to prevent money laundering,
+  terrorist financing, and other financial crimes.
+
+jurisdiction:
+  - US
+  - GB
+  - EU
+
+authority:
+  name: Financial Crimes Enforcement Network (FinCEN) / Financial Conduct Authority (FCA)
+  website: https://www.fincen.gov
+  contact: regulatory-compliance@bank.example.com
+
+category: anti-money-laundering
+
+tags:
+  - kyc
+  - aml
+  - cdd
+  - customer-identification
+  - suspicious-activity-reporting
+
+effectiveDate: "2020-01-01"
+lastUpdated: "2024-06-15"
+
+requirements:
+  - requirementId: CDD-1
+    description: |
+      Customer Due Diligence (CDD): Financial institutions must identify and verify
+      the identity of customers opening accounts. Verification must be completed using
+      reliable, independent source documents, data, or information.
+    mandatory: true
+    applicability:
+      businessLines:
+        - Retail Banking
+        - Commercial Banking
+        - Wealth Management
+        - Investment Banking
+      departments:
+        - Customer Operations
+        - KYC Operations
+        - Compliance
+      conditions: All new customer account openings
+    implementationGuidance: |
+      - Collect minimum identification information (name, DOB, address, ID number)
+      - Verify using government-issued photo ID
+      - Cross-check against reliable databases
+      - Document verification method and results
+      - Retain copies of verification documents for required period
+    evidenceRequired:
+      - Customer identification documents
+      - Verification procedure documentation
+      - Verification results and confidence scores
+      - Audit trail of verification process
+
+  - requirementId: CDD-2
+    description: |
+      Enhanced Due Diligence (EDD): For high-risk customers including Politically
+      Exposed Persons (PEPs), correspondent banking relationships, and customers
+      from high-risk jurisdictions, institutions must conduct enhanced scrutiny
+      including additional verification and ongoing monitoring.
+    mandatory: true
+    applicability:
+      conditions: |
+        - Politically Exposed Persons (PEPs)
+        - Customers from high-risk jurisdictions
+        - High-value transactions (>$50,000)
+        - Complex ownership structures
+        - Unusual transaction patterns
+    implementationGuidance: |
+      - Obtain senior management approval
+      - Understand source of wealth and funds
+      - Conduct enhanced ongoing monitoring
+      - Review relationship more frequently
+      - Apply stricter transaction monitoring thresholds
+    evidenceRequired:
+      - EDD questionnaires
+      - Source of wealth documentation
+      - Senior management approval records
+      - Enhanced monitoring reports
+
+  - requirementId: CIP-1
+    description: |
+      Customer Identification Program (CIP): Establish and maintain written procedures
+      for opening accounts that specify identifying information required, verification
+      methods, recordkeeping requirements, and procedures for customers who lack
+      standard identification.
+    mandatory: true
+    applicability:
+      businessLines:
+        - All
+    implementationGuidance: |
+      - Document CIP procedures in writing
+      - Define required identifying information
+      - Specify acceptable verification methods
+      - Establish recordkeeping requirements (minimum 5 years)
+      - Create exception procedures
+      - Train staff on CIP procedures
+    evidenceRequired:
+      - Written CIP procedures
+      - Staff training records
+      - CIP compliance testing results
+
+  - requirementId: SAR-1
+    description: |
+      Suspicious Activity Reporting (SAR): File Suspicious Activity Reports with
+      FinCEN for transactions of $5,000 or more where the institution knows, suspects,
+      or has reason to suspect illegal activity, violations of BSA requirements, or
+      attempts to evade BSA requirements.
+    mandatory: true
+    applicability:
+      departments:
+        - AML Compliance
+        - Fraud Prevention
+        - Transaction Monitoring
+      conditions: Suspicious transactions >= $5,000
+    implementationGuidance: |
+      - Implement transaction monitoring systems
+      - Define suspicious activity indicators
+      - Establish SAR decision-making process
+      - File SAR within 30 days of detection
+      - Do not notify customer of SAR filing
+      - Maintain confidentiality of SAR
+      - Retain SAR and supporting documentation for 5 years
+    evidenceRequired:
+      - Filed SARs
+      - SAR decision documentation
+      - Transaction monitoring alerts
+      - Investigation notes
+
+  - requirementId: MONITORING-1
+    description: |
+      Ongoing Monitoring: Conduct ongoing monitoring of customer relationships and
+      transactions to identify and report suspicious activities, maintain current
+      customer information, and ensure consistency with customer risk profile.
+    mandatory: true
+    applicability:
+      businessLines:
+        - All
+      conditions: All active customer relationships
+    implementationGuidance: |
+      - Implement automated transaction monitoring
+      - Define monitoring rules based on risk
+      - Periodically review and update customer information
+      - Investigate alerts and document decisions
+      - Escalate suspicious patterns
+      - Update customer risk ratings as needed
+    evidenceRequired:
+      - Monitoring system configuration
+      - Alert investigation records
+      - Customer information update logs
+      - Risk rating changes
+
+  - requirementId: RECORDKEEPING-1
+    description: |
+      Recordkeeping: Maintain records of all information collected under CDD and
+      verification procedures for at least 5 years after account closure. Records
+      must be readily accessible and producible upon regulatory request.
+    mandatory: true
+    applicability:
+      departments:
+        - Operations
+        - Compliance
+        - IT/Data Management
+    implementationGuidance: |
+      - Establish document retention policy (minimum 5 years)
+      - Implement secure document storage
+      - Ensure records are searchable and retrievable
+      - Include customer identification records
+      - Maintain transaction records
+      - Preserve SAR documentation
+      - Implement appropriate access controls
+    evidenceRequired:
+      - Document retention policy
+      - Storage system documentation
+      - Retrieval test results
+
+compliance:
+  status: compliant
+  lastAssessed: "2026-01-05T10:00:00Z"
+  assessedBy: compliance-officer@bank.example.com
+  complianceLevel: 94
+  gaps:
+    - requirementId: MONITORING-1
+      description: Transaction monitoring rules need updating for new payment methods (crypto, instant payments)
+      severity: medium
+      remediationPlan: Enhance monitoring rules to cover new payment types and channels
+      targetDate: "2026-03-31"
+
+    - requirementId: EDD-2
+      description: EDD procedures for complex beneficial ownership structures need enhancement
+      severity: medium
+      remediationPlan: Develop enhanced procedures and tools for UBO identification
+      targetDate: "2026-04-30"
+
+relatedControls:
+  - controlRef: control:multi-factor-verification:v1.0.0
+    requirementId: CDD-1
+    coverage: 95
+
+  - controlRef: control:sanctions-screening:v1.0.0
+    requirementId: CDD-2
+    coverage: 100
+
+  - controlRef: control:transaction-monitoring:v1.0.0
+    requirementId: MONITORING-1
+    coverage: 90
+
+  - controlRef: control:sar-filing:v1.0.0
+    requirementId: SAR-1
+    coverage: 100
+
+  - controlRef: control:audit-logging:v1.0.0
+    requirementId: RECORDKEEPING-1
+    coverage: 100
+
+affectedProcesses:
+  - atom:verify-customer-identity:v1.0.0
+  - molecule:customer-onboarding:v1.0.0
+  - workflow:retail-account-opening:v1.0.0
+  - workflow:wire-transfer:v1.0.0
+
+relatedRisks:
+  - risk:money-laundering:v1.0.0
+  - risk:terrorist-financing:v1.0.0
+  - risk:sanctions-violation:v1.0.0
+  - risk:regulatory-non-compliance:v1.0.0
+
+penalties:
+  financial:
+    min: 100000
+    max: 10000000
+    currency: USD
+    description: Civil monetary penalties ranging from $100,000 to $10 million per violation
+  other:
+    - License suspension or revocation
+    - Consent orders and enhanced supervision
+    - Restrictions on business activities
+    - Criminal prosecution of individuals
+    - Reputational damage and loss of customer trust
+
+references:
+  - type: official-text
+    title: Bank Secrecy Act (BSA)
+    url: https://www.fincen.gov/resources/statutes-regulations/bank-secrecy-act
+    date: "1970-10-26"
+
+  - type: official-text
+    title: USA PATRIOT Act
+    url: https://www.fincen.gov/resources/statutes-regulations/usa-patriot-act
+    date: "2001-10-26"
+
+  - type: guidance
+    title: FinCEN Customer Due Diligence Requirements
+    url: https://www.fincen.gov/resources/statutes-regulations/cdd-final-rule
+    date: "2016-05-11"
+
+  - type: guidance
+    title: FFIEC BSA/AML Examination Manual
+    url: https://bsaaml.ffiec.gov/manual
+    date: "2024-01-15"
+
+changeHistory:
+  - date: "2024-06-15"
+    description: Updated beneficial ownership requirements to clarify corporate transparency rules
+    impact: minor
+    affectedRequirements:
+      - CDD-2
+
+  - date: "2023-09-01"
+    description: Enhanced EDD requirements for cryptocurrency transactions
+    impact: major
+    affectedRequirements:
+      - CDD-2
+      - MONITORING-1
+
+  - date: "2022-01-01"
+    description: Updated SAR filing thresholds and procedures
+    impact: minor
+    affectedRequirements:
+      - SAR-1
+
+monitoring:
+  responsibleOfficer: compliance-officer@bank.example.com
+  reviewFrequency: quarterly
+  nextReview: "2026-04-05"
+  reportingRequirements:
+    - reportType: AML/CFT Annual Report
+      frequency: annually
+      dueDate: "April 30"
+      submittedTo: FinCEN / FCA
+
+    - reportType: BSA/AML Compliance Program Assessment
+      frequency: annually
+      dueDate: "December 31"
+      submittedTo: Board of Directors
+
+    - reportType: Suspicious Activity Reports (SARs)
+      frequency: as-needed
+      dueDate: "Within 30 days of detection"
+      submittedTo: FinCEN
+
+metadata:
+  createdAt: "2026-01-15T14:00:00Z"
+  updatedAt: "2026-01-15T14:00:00Z"
+  status: active

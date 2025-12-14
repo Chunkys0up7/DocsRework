@@ -1,0 +1,126 @@
+name: Validate Atoms
+
+on:
+  pull_request:
+    paths:
+      - 'atoms/**/*.atom.yml'
+      - 'schemas/atom-schema.json'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'atoms/**/*.atom.yml'
+
+jobs:
+  validate-atoms:
+    name: Validate Atom Definitions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install jsonschema pyyaml pytest pytest-cov
+
+      - name: Validate YAML syntax
+        run: |
+          python scripts/validate_yaml_syntax.py atoms/
+
+      - name: Validate against JSON schema
+        run: |
+          python scripts/validate_against_schema.py \
+            --schema schemas/atom-schema.json \
+            --files "atoms/**/*.atom.yml"
+
+      - name: Validate semantic rules
+        run: |
+          python scripts/validate_semantic_rules.py \
+            --type atom \
+            --files "atoms/**/*.atom.yml"
+
+      - name: Check ID format and versioning
+        run: |
+          python scripts/validate_versioning.py \
+            --type atom \
+            --files "atoms/**/*.atom.yml"
+
+      - name: Validate risk references exist
+        run: |
+          python scripts/validate_references.py \
+            --source-type atom \
+            --source-dir atoms/ \
+            --ref-type risk \
+            --ref-dir risks/
+
+      - name: Validate control references exist
+        run: |
+          python scripts/validate_references.py \
+            --source-type atom \
+            --source-dir atoms/ \
+            --ref-type control \
+            --ref-dir controls/
+
+      - name: Run atom unit tests
+        run: |
+          pytest tests/atoms/ -v --cov=atoms --cov-report=xml --cov-report=term
+
+      - name: Check test coverage
+        run: |
+          python scripts/check_coverage.py \
+            --threshold 90 \
+            --coverage-file coverage.xml
+
+      - name: Validate ownership
+        run: |
+          python scripts/validate_ownership.py \
+            --files "atoms/**/*.atom.yml"
+
+      - name: Check for breaking changes
+        if: github.event_name == 'pull_request'
+        run: |
+          python scripts/detect_breaking_changes.py \
+            --type atom \
+            --base-ref origin/${{ github.base_ref }} \
+            --head-ref HEAD
+
+      - name: Generate validation report
+        if: always()
+        run: |
+          python scripts/generate_validation_report.py \
+            --type atom \
+            --output atom-validation-report.md
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('atom-validation-report.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+
+      - name: Upload validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atom-validation-results
+          path: |
+            atom-validation-report.md
+            coverage.xml
+          retention-days: 30

@@ -1,0 +1,378 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://banking-docs-code.org/schemas/regulation-schema.json",
+  "title": "Regulation Schema",
+  "description": "Schema for regulatory requirements in the Banking Docs-as-Code system",
+  "type": "object",
+  "required": ["id", "version", "name", "description", "jurisdiction", "authority", "effectiveDate", "requirements"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^regulation:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$",
+      "description": "Unique identifier following pattern: regulation:name:vX.Y.Z"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version (MAJOR.MINOR.PATCH)"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 200,
+      "description": "Official name of the regulation"
+    },
+    "shortName": {
+      "type": "string",
+      "description": "Commonly used abbreviation or short name (e.g., GDPR, SOX, Basel III)"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 3000,
+      "description": "Detailed description of the regulation and its purpose"
+    },
+    "jurisdiction": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "Country or region code (ISO 3166-1 alpha-2)"
+      },
+      "minItems": 1,
+      "description": "Jurisdictions where this regulation applies"
+    },
+    "authority": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of regulatory authority (e.g., SEC, FCA, ECB)"
+        },
+        "website": {
+          "type": "string",
+          "format": "uri"
+        },
+        "contact": {
+          "type": "string"
+        }
+      },
+      "description": "Regulatory authority that enforces this regulation"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "financial-reporting",
+        "data-protection",
+        "anti-money-laundering",
+        "consumer-protection",
+        "capital-adequacy",
+        "risk-management",
+        "cybersecurity",
+        "corporate-governance",
+        "market-conduct",
+        "prudential"
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "effectiveDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when the regulation came into effect"
+    },
+    "expiryDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when the regulation expires (if applicable)"
+    },
+    "lastUpdated": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of last amendment or update"
+    },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["requirementId", "description", "mandatory"],
+        "properties": {
+          "requirementId": {
+            "type": "string",
+            "description": "Unique identifier for this requirement (e.g., Article 5.1)"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 20
+          },
+          "mandatory": {
+            "type": "boolean",
+            "description": "Whether this requirement is mandatory or recommended"
+          },
+          "applicability": {
+            "type": "object",
+            "properties": {
+              "businessLines": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "departments": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "conditions": {
+                "type": "string",
+                "description": "Conditions under which this requirement applies"
+              }
+            }
+          },
+          "implementationGuidance": {
+            "type": "string"
+          },
+          "evidenceRequired": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "description": "Specific requirements defined by this regulation"
+    },
+    "compliance": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["compliant", "partial", "non-compliant", "not-applicable", "in-progress"]
+        },
+        "lastAssessed": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "assessedBy": {
+          "type": "string",
+          "format": "email"
+        },
+        "complianceLevel": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Overall compliance percentage"
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "requirementId": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["critical", "high", "medium", "low"]
+              },
+              "remediationPlan": {
+                "type": "string"
+              },
+              "targetDate": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          }
+        }
+      }
+    },
+    "relatedControls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "controlRef": {
+            "type": "string",
+            "pattern": "^control:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+          },
+          "requirementId": {
+            "type": "string",
+            "description": "Which requirement this control addresses"
+          },
+          "coverage": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "How much of the requirement is covered by this control"
+          }
+        }
+      },
+      "description": "Controls that help meet this regulation's requirements"
+    },
+    "affectedProcesses": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(atom|molecule|workflow):[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+      },
+      "description": "Processes affected by this regulation"
+    },
+    "relatedRisks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^risk:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+      },
+      "description": "Risks related to non-compliance"
+    },
+    "penalties": {
+      "type": "object",
+      "properties": {
+        "financial": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "description": {
+              "type": "string"
+            }
+          }
+        },
+        "other": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Non-financial penalties (license revocation, restrictions, etc.)"
+        }
+      },
+      "description": "Penalties for non-compliance"
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["official-text", "guidance", "interpretation", "case-law", "industry-standard"]
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "description": "Reference documents and resources"
+    },
+    "changeHistory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": {
+            "type": "string"
+          },
+          "impact": {
+            "type": "string",
+            "enum": ["major", "minor", "clarification"]
+          },
+          "affectedRequirements": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "description": "History of amendments and changes"
+    },
+    "monitoring": {
+      "type": "object",
+      "properties": {
+        "responsibleOfficer": {
+          "type": "string",
+          "format": "email"
+        },
+        "reviewFrequency": {
+          "type": "string",
+          "enum": ["monthly", "quarterly", "semi-annually", "annually"]
+        },
+        "nextReview": {
+          "type": "string",
+          "format": "date"
+        },
+        "reportingRequirements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "reportType": {
+                "type": "string"
+              },
+              "frequency": {
+                "type": "string"
+              },
+              "dueDate": {
+                "type": "string"
+              },
+              "submittedTo": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "superseded", "repealed", "pending"]
+        },
+        "supersededBy": {
+          "type": "string",
+          "pattern": "^regulation:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+        }
+      }
+    }
+  }
+}

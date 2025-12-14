@@ -1,0 +1,195 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://banking-docs-code.org/schemas/atom-schema.json",
+  "title": "Atom Schema",
+  "description": "Schema for atomic operations in the Banking Docs-as-Code system",
+  "type": "object",
+  "required": ["id", "version", "name", "description", "owner", "steward", "inputs", "outputs", "risks", "controls"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^atom:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$",
+      "description": "Unique identifier following pattern: atom:name:vX.Y.Z"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version (MAJOR.MINOR.PATCH)"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 100,
+      "description": "Human-readable name of the atom"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 1000,
+      "description": "Detailed description of what this atom does"
+    },
+    "owner": {
+      "type": "string",
+      "format": "email",
+      "description": "Email of the owner responsible for this atom"
+    },
+    "steward": {
+      "type": "string",
+      "format": "email",
+      "description": "Email of the steward maintaining this atom"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags for categorization and discovery"
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type", "required"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["string", "number", "boolean", "object", "array", "file", "document"]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "validation": {
+            "type": "object",
+            "properties": {
+              "pattern": {
+                "type": "string"
+              },
+              "min": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              },
+              "enum": {
+                "type": "array"
+              }
+            }
+          }
+        }
+      },
+      "description": "Input parameters required by this atom"
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["string", "number", "boolean", "object", "array", "file", "document"]
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Outputs produced by this atom"
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^risk:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+      },
+      "description": "References to associated risks"
+    },
+    "controls": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^control:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+      },
+      "description": "References to implemented controls"
+    },
+    "regulations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^regulation:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+      },
+      "description": "References to applicable regulations"
+    },
+    "implementation": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["api", "script", "manual", "automated"]
+        },
+        "endpoint": {
+          "type": "string",
+          "format": "uri"
+        },
+        "script": {
+          "type": "string"
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Timeout in seconds"
+        },
+        "retries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        }
+      },
+      "description": "Implementation details for this atom"
+    },
+    "sla": {
+      "type": "object",
+      "properties": {
+        "maxDuration": {
+          "type": "integer",
+          "description": "Maximum duration in seconds"
+        },
+        "availability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Required availability percentage"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "deprecated": {
+          "type": "boolean"
+        },
+        "supersededBy": {
+          "type": "string",
+          "pattern": "^atom:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,268 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://banking-docs-code.org/schemas/risk-schema.json",
+  "title": "Risk Schema",
+  "description": "Schema for risk definitions in the Banking Docs-as-Code system",
+  "type": "object",
+  "required": ["id", "version", "name", "description", "owner", "category", "likelihood", "impact", "inherentRisk"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^risk:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$",
+      "description": "Unique identifier following pattern: risk:name:vX.Y.Z"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version (MAJOR.MINOR.PATCH)"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 150,
+      "description": "Human-readable name of the risk"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 2000,
+      "description": "Detailed description of the risk and its potential impact"
+    },
+    "owner": {
+      "type": "string",
+      "format": "email",
+      "description": "Email of the risk owner"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "operational",
+        "financial",
+        "compliance",
+        "reputational",
+        "strategic",
+        "technology",
+        "fraud",
+        "market",
+        "credit",
+        "liquidity"
+      ],
+      "description": "Risk category"
+    },
+    "subcategory": {
+      "type": "string",
+      "description": "More specific risk subcategory"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "likelihood": {
+      "type": "object",
+      "required": ["score", "rationale"],
+      "properties": {
+        "score": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Likelihood score: 1=Rare, 2=Unlikely, 3=Possible, 4=Likely, 5=Almost Certain"
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 20
+        },
+        "historicalOccurrences": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "impact": {
+      "type": "object",
+      "required": ["score", "rationale"],
+      "properties": {
+        "score": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Impact score: 1=Negligible, 2=Minor, 3=Moderate, 4=Major, 5=Catastrophic"
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 20
+        },
+        "financialImpact": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            }
+          }
+        },
+        "reputationalImpact": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "severe"]
+        }
+      }
+    },
+    "inherentRisk": {
+      "type": "object",
+      "required": ["score", "level"],
+      "properties": {
+        "score": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 25,
+          "description": "Calculated as likelihood × impact"
+        },
+        "level": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"],
+          "description": "Risk level based on score"
+        }
+      }
+    },
+    "residualRisk": {
+      "type": "object",
+      "properties": {
+        "score": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 25
+        },
+        "level": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "calculatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "Risk after controls are applied"
+    },
+    "controls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["controlRef", "effectiveness"],
+        "properties": {
+          "controlRef": {
+            "type": "string",
+            "pattern": "^control:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+          },
+          "effectiveness": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Control effectiveness percentage"
+          },
+          "mitigationType": {
+            "type": "string",
+            "enum": ["preventive", "detective", "corrective", "compensating"]
+          }
+        }
+      },
+      "description": "Controls that mitigate this risk"
+    },
+    "regulations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^regulation:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+      },
+      "description": "Regulations related to this risk"
+    },
+    "affectedProcesses": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(atom|molecule|workflow):[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+      },
+      "description": "Processes affected by this risk"
+    },
+    "triggers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "string",
+            "description": "Condition that triggers this risk"
+          },
+          "threshold": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Conditions that may trigger or escalate this risk"
+    },
+    "responseStrategy": {
+      "type": "object",
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": ["accept", "mitigate", "transfer", "avoid"],
+          "description": "Overall risk response strategy"
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "contingencyPlan": {
+          "type": "string"
+        }
+      }
+    },
+    "reviewSchedule": {
+      "type": "object",
+      "properties": {
+        "frequency": {
+          "type": "string",
+          "enum": ["monthly", "quarterly", "semi-annually", "annually"]
+        },
+        "lastReviewed": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "nextReview": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "reviewer": {
+          "type": "string",
+          "format": "email"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "monitoring", "closed", "escalated"]
+        },
+        "supersededBy": {
+          "type": "string",
+          "pattern": "^risk:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+        }
+      }
+    }
+  }
+}

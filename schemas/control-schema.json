@@ -1,0 +1,311 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://banking-docs-code.org/schemas/control-schema.json",
+  "title": "Control Schema",
+  "description": "Schema for control definitions in the Banking Docs-as-Code system",
+  "type": "object",
+  "required": ["id", "version", "name", "description", "owner", "controlType", "automationLevel", "frequency", "effectiveness"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^control:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$",
+      "description": "Unique identifier following pattern: control:name:vX.Y.Z"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version (MAJOR.MINOR.PATCH)"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 150,
+      "description": "Human-readable name of the control"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 2000,
+      "description": "Detailed description of the control and how it operates"
+    },
+    "owner": {
+      "type": "string",
+      "format": "email",
+      "description": "Email of the control owner"
+    },
+    "controlType": {
+      "type": "string",
+      "enum": ["preventive", "detective", "corrective", "compensating", "directive"],
+      "description": "Type of control based on its function"
+    },
+    "automationLevel": {
+      "type": "string",
+      "enum": ["fully-automated", "semi-automated", "manual"],
+      "description": "Level of automation for this control"
+    },
+    "frequency": {
+      "type": "string",
+      "enum": ["continuous", "real-time", "daily", "weekly", "monthly", "quarterly", "annually", "on-demand", "event-driven"],
+      "description": "How often the control is executed"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "effectiveness": {
+      "type": "object",
+      "required": ["rating", "lastAssessed"],
+      "properties": {
+        "rating": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Control effectiveness percentage (0-100)"
+        },
+        "lastAssessed": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "assessedBy": {
+          "type": "string",
+          "format": "email"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "location": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "testResults": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "testDate": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "result": {
+                "type": "string",
+                "enum": ["passed", "failed", "partial"]
+              },
+              "findings": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "implementation": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["system", "process", "policy", "training", "monitoring"]
+        },
+        "technology": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Technologies used to implement this control"
+        },
+        "procedure": {
+          "type": "string",
+          "description": "Detailed procedure for executing the control"
+        },
+        "responsible": {
+          "type": "string",
+          "format": "email",
+          "description": "Person/team responsible for executing the control"
+        },
+        "reviewer": {
+          "type": "string",
+          "format": "email",
+          "description": "Person/team responsible for reviewing control execution"
+        },
+        "automationScript": {
+          "type": "string",
+          "description": "Reference to automation script or API endpoint"
+        }
+      }
+    },
+    "mitigatedRisks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["riskRef", "mitigationPercentage"],
+        "properties": {
+          "riskRef": {
+            "type": "string",
+            "pattern": "^risk:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+          },
+          "mitigationPercentage": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "How much this control reduces the risk"
+          }
+        }
+      },
+      "description": "Risks mitigated by this control"
+    },
+    "regulations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "regulationRef": {
+            "type": "string",
+            "pattern": "^regulation:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+          },
+          "requirement": {
+            "type": "string",
+            "description": "Specific regulatory requirement this control addresses"
+          },
+          "compliance": {
+            "type": "string",
+            "enum": ["compliant", "partial", "non-compliant", "not-applicable"]
+          }
+        }
+      },
+      "description": "Regulatory requirements addressed by this control"
+    },
+    "appliedToProcesses": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(atom|molecule|workflow):[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+      },
+      "description": "Processes where this control is applied"
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "controlRef": {
+            "type": "string",
+            "pattern": "^control:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+          },
+          "relationship": {
+            "type": "string",
+            "enum": ["requires", "enhances", "compensates"]
+          }
+        }
+      },
+      "description": "Dependencies on other controls"
+    },
+    "kpis": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "target": {
+            "type": "number"
+          },
+          "actual": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Key Performance Indicators for this control"
+    },
+    "testing": {
+      "type": "object",
+      "properties": {
+        "testPlan": {
+          "type": "string",
+          "description": "Reference to test plan document"
+        },
+        "testFrequency": {
+          "type": "string",
+          "enum": ["monthly", "quarterly", "semi-annually", "annually"]
+        },
+        "lastTested": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "nextTest": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "issueId": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["open", "in-progress", "resolved", "closed"]
+          },
+          "identifiedDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resolvedDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "Known issues or deficiencies with this control"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "inactive", "under-review", "deprecated"]
+        },
+        "supersededBy": {
+          "type": "string",
+          "pattern": "^control:[a-z0-9-]+:v\\d+\\.\\d+\\.\\d+$"
+        }
+      }
+    }
+  }
+}

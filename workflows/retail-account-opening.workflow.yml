@@ -1,0 +1,367 @@
+id: workflow:retail-account-opening:v1.0.0
+version: 1.0.0
+name: Retail Account Opening
+description: |
+  End-to-end workflow for opening retail banking accounts including customer onboarding,
+  product selection, initial funding, and account activation. This workflow ensures
+  compliance with regulatory requirements and implements appropriate risk controls.
+
+owner: retail-banking@bank.example.com
+steward: platform-engineering@bank.example.com
+
+tags:
+  - retail-banking
+  - account-opening
+  - customer-lifecycle
+  - compliance
+
+businessContext:
+  department: Retail Banking
+  businessLine: Consumer Banking
+  priority: high
+  frequency: on-demand
+
+components:
+  - stepId: step-customer-consent
+    componentRef: atom:obtain-customer-consent:v1.0.0
+    componentType: atom
+    description: Obtain customer consent for data processing and terms
+    inputMapping:
+      customerId: $input.customerId
+      consentTypes:
+        - data-processing
+        - terms-and-conditions
+        - marketing-communications
+    outputMapping:
+      consentsObtained: consents
+      consentTimestamp: timestamp
+
+  - stepId: step-onboarding
+    componentRef: molecule:customer-onboarding:v1.0.0
+    componentType: molecule
+    description: Complete customer onboarding process
+    inputMapping:
+      customerId: $input.customerId
+      personalInfo: $input.customerData
+      documents: $input.documents
+      biometrics: $input.biometrics
+      accountType: $input.selectedAccountType
+      expectedTransactions: $input.transactionProfile
+    outputMapping:
+      onboardingResult: onboardingStatus
+      accountId: accountNumber
+      onboardingDocuments: documents
+
+  - stepId: step-product-selection
+    componentRef: atom:recommend-products:v1.0.0
+    componentType: atom
+    description: Recommend suitable products based on customer profile
+    inputMapping:
+      customerId: $input.customerId
+      customerProfile: $context.customerProfile
+      accountType: $input.selectedAccountType
+    outputMapping:
+      recommendedProducts: products
+    parallel: true
+
+  - stepId: step-credit-check
+    componentRef: atom:perform-credit-check:v1.0.0
+    componentType: atom
+    description: Perform credit check for overdraft facilities
+    inputMapping:
+      customerId: $input.customerId
+      requestedLimit: $input.overdraftLimit
+    outputMapping:
+      creditScore: score
+      approvedLimit: limit
+    parallel: true
+
+  - stepId: step-initial-deposit
+    componentRef: atom:process-deposit:v1.0.0
+    componentType: atom
+    description: Process initial deposit to fund the account
+    inputMapping:
+      accountNumber: $context.accountNumber
+      amount: $input.initialDeposit.amount
+      currency: $input.initialDeposit.currency
+      paymentMethod: $input.initialDeposit.method
+    outputMapping:
+      transactionId: depositTransactionId
+      depositStatus: status
+
+  - stepId: step-issue-debit-card
+    componentRef: atom:issue-debit-card:v1.0.0
+    componentType: atom
+    description: Issue debit card for the new account
+    inputMapping:
+      accountNumber: $context.accountNumber
+      customerId: $input.customerId
+      deliveryAddress: $input.customerData.address
+    outputMapping:
+      cardNumber: maskedCardNumber
+      deliveryTrackingId: trackingId
+
+  - stepId: step-setup-digital-banking
+    componentRef: atom:activate-digital-banking:v1.0.0
+    componentType: atom
+    description: Set up online and mobile banking access
+    inputMapping:
+      customerId: $input.customerId
+      accountNumber: $context.accountNumber
+      preferredUsername: $input.digitalBanking.username
+    outputMapping:
+      activationCode: code
+      digitalBankingStatus: status
+
+  - stepId: step-welcome-package
+    componentRef: atom:send-welcome-package:v1.0.0
+    componentType: atom
+    description: Send welcome package with account details
+    inputMapping:
+      customerId: $input.customerId
+      accountNumber: $context.accountNumber
+      documents: $context.onboardingDocuments
+      deliveryMethod: $input.communicationPreferences.channel
+    outputMapping:
+      packageSent: sent
+      deliveryConfirmation: confirmation
+
+flow:
+  startStep: step-customer-consent
+
+  transitions:
+    - from: step-customer-consent
+      to: step-onboarding
+      condition: $context.consentsObtained == true
+      label: Consents obtained
+
+    - from: step-customer-consent
+      to: END
+      condition: $context.consentsObtained == false
+      label: Consents not obtained - cannot proceed
+
+    - from: step-onboarding
+      to: step-product-selection
+      condition: $context.onboardingResult == 'COMPLETED'
+      label: Onboarding successful
+
+    - from: step-onboarding
+      to: END
+      condition: $context.onboardingResult == 'FAILED'
+      label: Onboarding failed
+
+    - from: step-product-selection
+      to: step-initial-deposit
+      label: Products recommended
+
+    - from: step-credit-check
+      to: step-initial-deposit
+      label: Credit check complete
+
+    - from: step-initial-deposit
+      to: step-issue-debit-card
+      condition: $context.depositStatus == 'COMPLETED'
+      label: Initial deposit successful
+
+    - from: step-initial-deposit
+      to: END
+      condition: $context.depositStatus == 'FAILED'
+      label: Deposit failed
+
+    - from: step-issue-debit-card
+      to: step-setup-digital-banking
+      label: Debit card issued
+
+    - from: step-setup-digital-banking
+      to: step-welcome-package
+      condition: $context.digitalBankingStatus == 'ACTIVE'
+      label: Digital banking activated
+
+    - from: step-welcome-package
+      to: END
+      label: Account opening complete
+
+  parallelBranches:
+    - branchId: parallel-checks
+      steps:
+        - step-product-selection
+        - step-credit-check
+      joinAt: step-initial-deposit
+
+  gates:
+    - stepId: step-customer-consent
+      type: compliance
+      validationRules:
+        - "consents.dataProcessing == true"
+        - "consents.termsAndConditions == true"
+
+    - stepId: step-onboarding
+      type: compliance
+      validationRules:
+        - "onboardingStatus == 'COMPLETED'"
+        - "accountNumber != null"
+
+    - stepId: step-initial-deposit
+      type: validation
+      validationRules:
+        - "depositStatus == 'COMPLETED'"
+        - "amount >= minimumDepositRequired"
+
+    - stepId: step-issue-debit-card
+      type: approval
+      approvalGroup: card-operations
+      validationRules:
+        - "accountStatus == 'ACTIVE'"
+
+  errorHandling:
+    - stepId: step-onboarding
+      errorType: verification-failure
+      action: escalate
+      fallbackStep: step-customer-consent
+
+    - stepId: step-initial-deposit
+      errorType: payment-failure
+      action: retry
+      fallbackStep: step-initial-deposit
+
+    - stepId: step-credit-check
+      errorType: external-service-unavailable
+      action: skip
+
+inputs:
+  - name: customerId
+    type: string
+    required: true
+    description: Unique customer identifier
+
+  - name: customerData
+    type: object
+    required: true
+    description: Complete customer personal information
+
+  - name: documents
+    type: object
+    required: true
+    description: Required documents for account opening
+
+  - name: biometrics
+    type: object
+    required: true
+    description: Biometric data for verification
+
+  - name: selectedAccountType
+    type: string
+    required: true
+    description: Type of retail account (checking, savings, etc.)
+
+  - name: transactionProfile
+    type: object
+    required: false
+    description: Expected transaction patterns
+
+  - name: initialDeposit
+    type: object
+    required: true
+    description: Initial deposit details
+
+  - name: overdraftLimit
+    type: number
+    required: false
+    description: Requested overdraft limit
+
+  - name: digitalBanking
+    type: object
+    required: true
+    description: Digital banking preferences
+
+  - name: communicationPreferences
+    type: object
+    required: true
+    description: Customer communication preferences
+
+outputs:
+  - name: accountNumber
+    type: string
+    description: Created account number
+
+  - name: accountStatus
+    type: string
+    description: Current account status
+
+  - name: cardDetails
+    type: object
+    description: Debit card details
+
+  - name: digitalBankingCredentials
+    type: object
+    description: Digital banking access credentials
+
+  - name: completionTimestamp
+    type: string
+    description: Workflow completion timestamp
+
+risks:
+  - risk:identity-fraud:v1.0.0
+  - risk:sanctions-violation:v1.0.0
+  - risk:regulatory-non-compliance:v1.0.0
+  - risk:data-breach:v1.0.0
+  - risk:payment-fraud:v1.0.0
+  - risk:operational-error:v1.0.0
+
+controls:
+  - control:multi-factor-verification:v1.0.0
+  - control:sanctions-screening:v1.0.0
+  - control:compliance-approval:v1.0.0
+  - control:audit-logging:v1.0.0
+  - control:data-encryption:v1.0.0
+  - control:transaction-monitoring:v1.0.0
+  - control:fraud-detection:v1.0.0
+
+regulations:
+  - regulation:kyc-aml:v1.0.0
+  - regulation:gdpr:v1.0.0
+  - regulation:patriot-act:v1.0.0
+  - regulation:mifid-ii:v1.0.0
+  - regulation:psd2:v1.0.0
+
+sla:
+  maxDuration: 1800
+  availability: 99.9
+  successRate: 95.0
+
+monitoring:
+  kpis:
+    - name: Account Opening Time
+      metric: avg_completion_time
+      threshold: 1200
+
+    - name: Success Rate
+      metric: successful_completions
+      threshold: 95.0
+
+    - name: Fraud Detection Rate
+      metric: fraud_cases_prevented
+      threshold: 100.0
+
+  alerts:
+    - condition: completion_time > 1800
+      severity: medium
+      notifyTo:
+        - operations-team@bank.example.com
+
+    - condition: fraud_detected == true
+      severity: critical
+      notifyTo:
+        - fraud-team@bank.example.com
+        - compliance-team@bank.example.com
+
+    - condition: success_rate < 90
+      severity: high
+      notifyTo:
+        - retail-banking@bank.example.com
+        - platform-engineering@bank.example.com
+
+metadata:
+  createdAt: "2026-01-15T11:00:00Z"
+  updatedAt: "2026-01-15T11:00:00Z"
+  deprecated: false

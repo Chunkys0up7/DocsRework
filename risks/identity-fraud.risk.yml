@@ -1,0 +1,134 @@
+id: risk:identity-fraud:v1.0.0
+version: 1.0.0
+name: Identity Fraud Risk
+description: |
+  Risk of fraudulent account opening or access using stolen, synthetic, or fabricated
+  identity information. This includes scenarios where criminals use stolen personal
+  information, fake documents, or deepfake technology to impersonate legitimate customers
+  or create fictitious identities to open accounts for illicit purposes such as money
+  laundering, fraud, or terrorist financing.
+
+owner: fraud-team@bank.example.com
+
+category: fraud
+subcategory: identity-theft
+
+tags:
+  - fraud
+  - kyc
+  - identity
+  - aml
+  - account-opening
+
+likelihood:
+  score: 4
+  rationale: |
+    Identity fraud attempts are frequent in the banking sector, with sophisticated
+    criminal organizations using advanced techniques including deepfakes, synthetic
+    identities, and stolen credentials. The rise of digital banking has increased
+    attack surface. Historical data shows approximately 3-5 fraud attempts per 1000
+    account openings.
+  historicalOccurrences: 247
+
+impact:
+  score: 4
+  rationale: |
+    Successful identity fraud can lead to significant financial losses, regulatory
+    penalties, reputational damage, and potential legal liability. The bank may be
+    held responsible for fraudulent transactions and may face sanctions for AML/KYC
+    failures. Average loss per successful fraud case is estimated at $50,000-$150,000,
+    with additional costs for investigation, remediation, and regulatory reporting.
+  financialImpact:
+    min: 50000
+    max: 500000
+    currency: USD
+  reputationalImpact: high
+
+inherentRisk:
+  score: 16
+  level: high
+
+residualRisk:
+  score: 6
+  level: medium
+  calculatedAt: "2026-01-15T12:00:00Z"
+
+controls:
+  - controlRef: control:multi-factor-verification:v1.0.0
+    effectiveness: 85
+    mitigationType: preventive
+
+  - controlRef: control:sanctions-screening:v1.0.0
+    effectiveness: 90
+    mitigationType: preventive
+
+  - controlRef: control:biometric-verification:v1.0.0
+    effectiveness: 92
+    mitigationType: preventive
+
+  - controlRef: control:document-verification:v1.0.0
+    effectiveness: 80
+    mitigationType: preventive
+
+  - controlRef: control:fraud-detection:v1.0.0
+    effectiveness: 75
+    mitigationType: detective
+
+  - controlRef: control:audit-logging:v1.0.0
+    effectiveness: 70
+    mitigationType: detective
+
+regulations:
+  - regulation:kyc-aml:v1.0.0
+  - regulation:patriot-act:v1.0.0
+  - regulation:bank-secrecy-act:v1.0.0
+
+affectedProcesses:
+  - atom:verify-customer-identity:v1.0.0
+  - molecule:customer-onboarding:v1.0.0
+  - workflow:retail-account-opening:v1.0.0
+  - workflow:business-account-opening:v1.0.0
+
+triggers:
+  - condition: Multiple account opening attempts with similar information
+    threshold: "3 attempts within 24 hours"
+
+  - condition: Document verification confidence score below threshold
+    threshold: "confidence < 75%"
+
+  - condition: Biometric mismatch detected
+    threshold: "match_score < 80%"
+
+  - condition: Customer information matches known fraud patterns
+    threshold: "fraud_score > 70"
+
+  - condition: Sanctions or watchlist hit
+    threshold: "match_confidence > 60%"
+
+responseStrategy:
+  strategy: mitigate
+  rationale: |
+    Identity fraud cannot be completely eliminated but can be significantly reduced
+    through layered controls including biometric verification, document authentication,
+    behavioral analytics, and continuous monitoring. The combination of preventive
+    and detective controls reduces residual risk to acceptable levels.
+  contingencyPlan: |
+    In the event of confirmed identity fraud:
+    1. Immediately freeze affected accounts
+    2. Notify fraud team and law enforcement
+    3. File Suspicious Activity Report (SAR)
+    4. Conduct forensic investigation
+    5. Implement additional controls if pattern identified
+    6. Update fraud detection models
+    7. Review and strengthen affected controls
+
+reviewSchedule:
+  frequency: quarterly
+  lastReviewed: "2026-01-10T14:00:00Z"
+  nextReview: "2026-04-10T14:00:00Z"
+  reviewer: fraud-team@bank.example.com
+
+metadata:
+  createdAt: "2026-01-15T12:00:00Z"
+  updatedAt: "2026-01-15T12:00:00Z"
+  status: active

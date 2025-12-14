@@ -1,0 +1,206 @@
+id: molecule:customer-onboarding:v1.0.0
+version: 1.0.0
+name: Customer Onboarding
+description: |
+  Complete customer onboarding process including identity verification, risk assessment,
+  account creation, and compliance checks. This molecule orchestrates multiple atoms
+  to provide a comprehensive onboarding workflow.
+
+owner: customer-operations@bank.example.com
+steward: platform-engineering@bank.example.com
+
+tags:
+  - onboarding
+  - customer-lifecycle
+  - compliance
+  - kyc
+
+atoms:
+  - stepId: step-verify-identity
+    atomRef: atom:verify-customer-identity:v1.0.0
+    description: Verify customer identity using government ID and biometrics
+    inputMapping:
+      customerId: $input.customerId
+      idDocument: $input.documents.governmentId
+      biometricData: $input.biometrics
+      customerData: $input.personalInfo
+    outputMapping:
+      verificationResult: verificationStatus
+      verificationConfidence: confidenceScore
+      verificationRef: verificationId
+
+  - stepId: step-risk-assessment
+    atomRef: atom:assess-customer-risk:v1.0.0
+    description: Assess customer risk profile based on various factors
+    inputMapping:
+      customerId: $input.customerId
+      customerData: $input.personalInfo
+      transactionProfile: $input.expectedTransactions
+    outputMapping:
+      riskLevel: riskScore
+      riskCategory: riskClassification
+
+  - stepId: step-sanctions-check
+    atomRef: atom:check-sanctions:v1.0.0
+    description: Check customer against sanctions and PEP lists
+    inputMapping:
+      customerName: $input.personalInfo.fullName
+      dateOfBirth: $input.personalInfo.dob
+      nationality: $input.personalInfo.nationality
+    outputMapping:
+      sanctionsResult: checkResult
+      matchesFound: matches
+
+  - stepId: step-create-account
+    atomRef: atom:create-customer-account:v1.0.0
+    description: Create customer account in core banking system
+    inputMapping:
+      customerId: $input.customerId
+      customerData: $input.personalInfo
+      accountType: $input.accountType
+      riskLevel: $context.riskLevel
+    outputMapping:
+      accountNumber: accountId
+      accountStatus: status
+
+  - stepId: step-generate-documents
+    atomRef: atom:generate-account-documents:v1.0.0
+    description: Generate account opening documents and agreements
+    inputMapping:
+      customerId: $input.customerId
+      accountNumber: $context.accountNumber
+      accountType: $input.accountType
+    outputMapping:
+      documents: generatedDocuments
+
+flow:
+  startStep: step-verify-identity
+
+  transitions:
+    - from: step-verify-identity
+      to: step-risk-assessment
+      condition: $context.verificationResult == 'VERIFIED'
+      label: Identity verified
+
+    - from: step-verify-identity
+      to: END
+      condition: $context.verificationResult == 'FAILED'
+      label: Verification failed
+
+    - from: step-risk-assessment
+      to: step-sanctions-check
+      label: Proceed to sanctions check
+
+    - from: step-sanctions-check
+      to: step-create-account
+      condition: $context.sanctionsResult == 'CLEAR'
+      label: Sanctions check passed
+
+    - from: step-sanctions-check
+      to: END
+      condition: $context.sanctionsResult == 'HIT'
+      label: Sanctions hit - manual review required
+
+    - from: step-create-account
+      to: step-generate-documents
+      condition: $context.accountStatus == 'ACTIVE'
+      label: Account created successfully
+
+    - from: step-generate-documents
+      to: END
+      label: Onboarding complete
+
+  gates:
+    - stepId: step-verify-identity
+      type: control
+      validationRules:
+        - "confidenceScore >= 85"
+        - "sanctionsCheckResult.status == 'CLEAR'"
+
+    - stepId: step-sanctions-check
+      type: compliance
+      validationRules:
+        - "checkResult != 'HIT'"
+        - "checkResult != 'POTENTIAL_MATCH' OR manualReviewCompleted == true"
+
+    - stepId: step-create-account
+      type: approval
+      approver: compliance-officer@bank.example.com
+      validationRules:
+        - "riskLevel != 'HIGH' OR approvalReceived == true"
+
+inputs:
+  - name: customerId
+    type: string
+    required: true
+    description: Unique customer identifier
+
+  - name: personalInfo
+    type: object
+    required: true
+    description: Customer personal information
+
+  - name: documents
+    type: object
+    required: true
+    description: Customer documents including government ID
+
+  - name: biometrics
+    type: object
+    required: true
+    description: Biometric data for verification
+
+  - name: accountType
+    type: string
+    required: true
+    description: Type of account to create
+
+  - name: expectedTransactions
+    type: object
+    required: false
+    description: Expected transaction profile
+
+outputs:
+  - name: onboardingStatus
+    type: string
+    description: Overall status of onboarding (COMPLETED, FAILED, MANUAL_REVIEW)
+
+  - name: accountNumber
+    type: string
+    description: Created account number
+
+  - name: customerId
+    type: string
+    description: Customer identifier
+
+  - name: documents
+    type: array
+    description: Generated account documents
+
+risks:
+  - risk:identity-fraud:v1.0.0
+  - risk:sanctions-violation:v1.0.0
+  - risk:regulatory-non-compliance:v1.0.0
+  - risk:data-breach:v1.0.0
+
+controls:
+  - control:multi-factor-verification:v1.0.0
+  - control:sanctions-screening:v1.0.0
+  - control:compliance-approval:v1.0.0
+  - control:audit-logging:v1.0.0
+  - control:data-encryption:v1.0.0
+
+regulations:
+  - regulation:kyc-aml:v1.0.0
+  - regulation:gdpr:v1.0.0
+  - regulation:patriot-act:v1.0.0
+  - regulation:mifid-ii:v1.0.0
+
+sla:
+  maxDuration: 300
+  availability: 99.5
+
+metadata:
+  createdAt: "2026-01-15T10:30:00Z"
+  updatedAt: "2026-01-15T10:30:00Z"
+  deprecated: false
