@@ -1,0 +1,47 @@
+id: atom:create-customer-account:v1.0.0
+version: 1.0.0
+name: Create Customer Account
+description: Creates customer account in core banking system with all required fields and validations
+owner: operations-team@bank.example.com
+steward: platform-engineering@bank.example.com
+tags: [account-creation, core-banking, operations]
+inputs:
+  - name: customerId
+    type: string
+    required: true
+  - name: customerData
+    type: object
+    required: true
+  - name: accountType
+    type: string
+    required: true
+  - name: riskLevel
+    type: string
+    required: true
+outputs:
+  - name: accountId
+    type: string
+    description: Created account number
+  - name: status
+    type: string
+    description: Account status (ACTIVE, PENDING, SUSPENDED)
+risks:
+  - risk:operational-error:v1.0.0
+  - risk:data-integrity:v1.0.0
+controls:
+  - control:dual-control:v1.0.0
+  - control:data-validation:v1.0.0
+regulations:
+  - regulation:banking-act:v1.0.0
+implementation:
+  type: api
+  endpoint: https://api.bank.example.com/v1/accounts/create
+  timeout: 30
+  retries: 1
+sla:
+  maxDuration: 45
+  availability: 99.9
+metadata:
+  createdAt: "2026-01-16T09:30:00Z"
+  updatedAt: "2026-01-16T09:30:00Z"
+  deprecated: false

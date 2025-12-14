@@ -1,0 +1,54 @@
+id: risk:money-laundering:v1.0.0
+version: 1.0.0
+name: Money Laundering Risk
+description: Risk of bank being used for money laundering activities through placement, layering, or integration of illicit funds
+owner: aml-team@bank.example.com
+category: compliance
+subcategory: anti-money-laundering
+tags: [aml, financial-crime, compliance]
+likelihood:
+  score: 3
+  rationale: Moderate likelihood given banking sector exposure to financial crime
+  historicalOccurrences: 45
+impact:
+  score: 5
+  rationale: Severe regulatory penalties, reputational damage, and potential criminal liability
+  financialImpact:
+    min: 500000
+    max: 50000000
+    currency: USD
+  reputationalImpact: severe
+inherentRisk:
+  score: 15
+  level: high
+residualRisk:
+  score: 6
+  level: medium
+  calculatedAt: "2026-01-16T10:00:00Z"
+controls:
+  - controlRef: control:transaction-monitoring:v1.0.0
+    effectiveness: 85
+    mitigationType: detective
+  - controlRef: control:sanctions-screening:v1.0.0
+    effectiveness: 90
+    mitigationType: preventive
+regulations:
+  - regulation:kyc-aml:v1.0.0
+  - regulation:bank-secrecy-act:v1.0.0
+affectedProcesses:
+  - molecule:customer-onboarding:v1.0.0
+  - workflow:retail-account-opening:v1.0.0
+  - workflow:wire-transfer:v1.0.0
+responseStrategy:
+  strategy: mitigate
+  rationale: Implement robust AML controls and monitoring
+  contingencyPlan: Enhanced monitoring, SAR filing, account freeze protocols
+reviewSchedule:
+  frequency: quarterly
+  lastReviewed: "2026-01-10T14:00:00Z"
+  nextReview: "2026-04-10T14:00:00Z"
+  reviewer: aml-officer@bank.example.com
+metadata:
+  createdAt: "2026-01-16T10:00:00Z"
+  updatedAt: "2026-01-16T10:00:00Z"
+  status: active

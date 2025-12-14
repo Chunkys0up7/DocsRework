@@ -1,0 +1,49 @@
+id: control:transaction-monitoring:v1.0.0
+version: 1.0.0
+name: Automated Transaction Monitoring
+description: Real-time monitoring of all transactions for suspicious patterns and AML red flags
+owner: aml-operations@bank.example.com
+controlType: detective
+automationLevel: fully-automated
+frequency: real-time
+tags: [aml, monitoring, fraud-detection]
+effectiveness:
+  rating: 85
+  lastAssessed: "2026-01-15T10:00:00Z"
+  assessedBy: control-testing@bank.example.com
+implementation:
+  method: system
+  technology:
+    - AML monitoring platform
+    - Machine learning algorithms
+    - Rule-based engine
+  procedure: Continuous transaction screening with automated alert generation
+  responsible: aml-operations@bank.example.com
+  automationScript: /src/aml/transaction_monitor.py
+mitigatedRisks:
+  - riskRef: risk:money-laundering:v1.0.0
+    mitigationPercentage: 85
+  - riskRef: risk:terrorist-financing:v1.0.0
+    mitigationPercentage: 80
+regulations:
+  - regulationRef: regulation:kyc-aml:v1.0.0
+    requirement: MONITORING-1
+    compliance: compliant
+appliedToProcesses:
+  - workflow:wire-transfer:v1.0.0
+  - workflow:cash-deposit:v1.0.0
+kpis:
+  - name: Alert Detection Rate
+    metric: alerts_generated / total_transactions
+    target: 2.5
+    actual: 2.3
+    unit: percentage
+  - name: False Positive Rate
+    metric: false_positives / total_alerts
+    target: 15.0
+    actual: 12.8
+    unit: percentage
+metadata:
+  createdAt: "2026-01-16T10:30:00Z"
+  updatedAt: "2026-01-16T10:30:00Z"
+  status: active

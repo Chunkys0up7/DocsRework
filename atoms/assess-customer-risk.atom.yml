@@ -1,0 +1,81 @@
+id: atom:assess-customer-risk:v1.0.0
+version: 1.0.0
+name: Assess Customer Risk
+description: |
+  Assesses customer risk profile based on various factors including transaction patterns,
+  geographic location, business type, and historical behavior. Assigns risk rating
+  for enhanced due diligence requirements.
+
+owner: risk-team@bank.example.com
+steward: platform-engineering@bank.example.com
+
+tags:
+  - risk-assessment
+  - customer-due-diligence
+  - aml
+  - compliance
+
+inputs:
+  - name: customerId
+    type: string
+    required: true
+    description: Unique customer identifier
+
+  - name: customerData
+    type: object
+    required: true
+    description: Customer demographic and business information
+
+  - name: transactionProfile
+    type: object
+    required: true
+    description: Expected transaction volumes and patterns
+
+  - name: geographicRisk
+    type: object
+    required: false
+    description: Geographic risk factors
+
+outputs:
+  - name: riskScore
+    type: number
+    description: Numerical risk score (0-100)
+
+  - name: riskClassification
+    type: string
+    description: Risk category (LOW, MEDIUM, HIGH, CRITICAL)
+
+  - name: riskFactors
+    type: array
+    description: List of identified risk factors
+
+  - name: recommendedControls
+    type: array
+    description: Recommended additional controls
+
+risks:
+  - risk:inadequate-risk-assessment:v1.0.0
+  - risk:money-laundering:v1.0.0
+
+controls:
+  - control:risk-scoring-algorithm:v1.0.0
+  - control:audit-logging:v1.0.0
+
+regulations:
+  - regulation:kyc-aml:v1.0.0
+  - regulation:fatf-recommendations:v1.0.0
+
+implementation:
+  type: api
+  endpoint: https://api.bank.example.com/v1/risk/assess
+  timeout: 15
+  retries: 2
+
+sla:
+  maxDuration: 20
+  availability: 99.9
+
+metadata:
+  createdAt: "2026-01-16T09:00:00Z"
+  updatedAt: "2026-01-16T09:00:00Z"
+  deprecated: false

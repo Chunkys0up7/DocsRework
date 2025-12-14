@@ -1,0 +1,44 @@
+id: atom:check-sanctions:v1.0.0
+version: 1.0.0
+name: Check Sanctions Lists
+description: Screen customer against global sanctions lists including OFAC, EU, UN sanctions, and PEP databases
+owner: compliance-team@bank.example.com
+steward: platform-engineering@bank.example.com
+tags: [sanctions, compliance, aml, screening]
+inputs:
+  - name: customerName
+    type: string
+    required: true
+  - name: dateOfBirth
+    type: string
+    required: true
+  - name: nationality
+    type: string
+    required: true
+outputs:
+  - name: checkResult
+    type: string
+    description: CLEAR, HIT, POTENTIAL_MATCH
+  - name: matches
+    type: array
+    description: List of potential matches
+risks:
+  - risk:sanctions-violation:v1.0.0
+controls:
+  - control:sanctions-screening:v1.0.0
+  - control:audit-logging:v1.0.0
+regulations:
+  - regulation:ofac-sanctions:v1.0.0
+  - regulation:kyc-aml:v1.0.0
+implementation:
+  type: api
+  endpoint: https://api.bank.example.com/v1/sanctions/check
+  timeout: 10
+  retries: 3
+sla:
+  maxDuration: 15
+  availability: 99.95
+metadata:
+  createdAt: "2026-01-16T09:15:00Z"
+  updatedAt: "2026-01-16T09:15:00Z"
+  deprecated: false
