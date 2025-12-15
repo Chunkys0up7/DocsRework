@@ -28,7 +28,7 @@ export default function RegulationsPage() {
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this regulation?')) {
-      try:
+      try {
         await regulationsApi.delete(id);
         toast.success('Regulation deleted successfully');
       } catch (error: any) {
